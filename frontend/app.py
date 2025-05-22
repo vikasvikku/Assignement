@@ -49,33 +49,42 @@ def analyze_query(query: str) -> Dict:
     """Analyze query and get themes"""
     try:
         st.write(f"Connecting to backend at: {API_URL}")
-        response = requests.post(f"{API_URL}/analyze", json={"query": query})
-        response.raise_for_status()
-        result = response.json()
-        
-        if result and 'themes' in result:
-            st.session_state.themes = result['themes']
-            # Update document responses based on themes
-            doc_responses = []
-            for theme in result['themes']:
-                for doc in theme['documents']:
-                    doc_responses.append({
-                        'Document ID': doc['doc_id'],
-                        'Extracted Answer': doc['extracted_answer'],
-                        'Citation': doc['citation'],
-                        'Theme': theme['theme']
-                    })
-            st.session_state.document_responses = doc_responses
+        with st.spinner("Analyzing documents..."):
+            response = requests.post(
+                f"{API_URL}/analyze",
+                json={"query": query},
+                timeout=30  # Add timeout
+            )
+            response.raise_for_status()
+            result = response.json()
             
-        return result
+            if result and 'themes' in result:
+                st.session_state.themes = result['themes']
+                # Update document responses based on themes
+                doc_responses = []
+                for theme in result['themes']:
+                    for doc in theme['documents']:
+                        doc_responses.append({
+                            'Document ID': doc['doc_id'],
+                            'Extracted Answer': doc['extracted_answer'],
+                            'Citation': doc['citation'],
+                            'Theme': theme['theme']
+                        })
+                st.session_state.document_responses = doc_responses
+                st.success(f"Successfully analyzed query. Found {len(result['themes'])} themes.")
+                
+            return result
     except requests.exceptions.ConnectionError as e:
         st.error(f"Could not connect to backend at {API_URL}. Please ensure the backend service is running.")
         st.error(f"Error details: {str(e)}")
         return None
+    except requests.exceptions.Timeout:
+        st.error("Request timed out. The backend is taking too long to respond.")
+        return None
     except requests.exceptions.HTTPError as e:
         st.error(f"Backend returned an error: {str(e)}")
-        st.error(f"Response status code: {e.response.status_code}")
-        st.error(f"Response text: {e.response.text}")
+        if hasattr(e.response, 'text'):
+            st.error(f"Response details: {e.response.text}")
         return None
     except Exception as e:
         st.error(f"Error analyzing query: {str(e)}")

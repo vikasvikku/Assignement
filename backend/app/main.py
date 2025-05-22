@@ -103,7 +103,11 @@ app = FastAPI(title="Document Research & Theme Identifier")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:8501",  # Local Streamlit
+        "https://document-research-frontend.onrender.com",  # Deployed frontend
+        "https://*.onrender.com"  # Any Render subdomain
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -184,8 +188,17 @@ async def upload_documents(files: List[UploadFile] = File(...)):
 @app.post("/analyze")
 async def analyze_documents(request: AnalyzeRequest):
     """Analyze documents and identify themes"""
-    themes = await theme_analyzer.analyze(request.query)
-    return {"themes": themes}
+    try:
+        logger.info(f"Received analysis request for query: {request.query}")
+        themes = await theme_analyzer.analyze(request.query)
+        logger.info(f"Successfully analyzed query, found {len(themes)} themes")
+        return {"themes": themes}
+    except Exception as e:
+        logger.error(f"Error analyzing documents: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error analyzing documents: {str(e)}"
+        )
 
 @app.get("/documents")
 async def get_documents():
