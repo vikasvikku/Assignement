@@ -48,6 +48,7 @@ def upload_documents(files: List[UploadedFile]) -> Dict:
 def analyze_query(query: str) -> Dict:
     """Analyze query and get themes"""
     try:
+        st.write(f"Connecting to backend at: {API_URL}")
         response = requests.post(f"{API_URL}/analyze", json={"query": query})
         response.raise_for_status()
         result = response.json()
@@ -67,6 +68,15 @@ def analyze_query(query: str) -> Dict:
             st.session_state.document_responses = doc_responses
             
         return result
+    except requests.exceptions.ConnectionError as e:
+        st.error(f"Could not connect to backend at {API_URL}. Please ensure the backend service is running.")
+        st.error(f"Error details: {str(e)}")
+        return None
+    except requests.exceptions.HTTPError as e:
+        st.error(f"Backend returned an error: {str(e)}")
+        st.error(f"Response status code: {e.response.status_code}")
+        st.error(f"Response text: {e.response.text}")
+        return None
     except Exception as e:
         st.error(f"Error analyzing query: {str(e)}")
         return None
