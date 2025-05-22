@@ -13,7 +13,7 @@ import time
 load_dotenv()
 
 # Constants
-API_URL = "http://localhost:8000"
+API_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
 
 def init_session_state():
     """Initialize session state variables"""
