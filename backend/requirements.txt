@@ -17,5 +17,5 @@ qdrant-client==1.6.9
 requests==2.31.0
 sentence-transformers==2.5.1
 urllib3==1.26.15
-kubernetes>=28.1.0,<29.0.0
+kubernetes==27.2.0
 groq==0.3.0
