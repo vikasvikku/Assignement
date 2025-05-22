@@ -46,7 +46,7 @@ try:
     groq_client = groq.Client(api_key=settings.GROQ_API_KEY)
 except Exception as e:
     logger.error(f"Failed to initialize Groq: {str(e)}")
-    raise
+    groq_client = None  # Set to None instead of raising an error
 
 # Initialize embedding model
 embedding_model = SentenceTransformerEmbeddings()

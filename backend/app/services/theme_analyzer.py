@@ -2,14 +2,22 @@ from typing import List, Dict
 import groq
 import json
 from ..config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ThemeAnalyzer:
     def __init__(self):
-        self.client = groq.Client(api_key=settings.GROQ_API_KEY)
+        self.groq_client = groq.Client(api_key=settings.GROQ_API_KEY) if settings.GROQ_API_KEY else None
         self.model = settings.GROQ_MODEL
 
     async def analyze(self, query: str) -> List[Dict]:
+        """Analyze documents and identify themes"""
         try:
+            if not self.groq_client:
+                logger.warning("Groq client not available, using mock themes")
+                return self._get_mock_themes()
+
             # Create the prompt for theme analysis
             prompt = f"""
             Analyze the following query and identify common themes.
@@ -40,7 +48,7 @@ class ThemeAnalyzer:
             """
             
             # Get response from Groq
-            response = self.client.chat.completions.create(
+            response = self.groq_client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an expert at analyzing documents and identifying themes. Always return valid JSON."},
